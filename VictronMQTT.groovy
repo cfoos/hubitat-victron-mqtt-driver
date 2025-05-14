@@ -60,6 +60,9 @@ void initialize() {
     state.remove('connectDelay')
     connect()
     subscribe()
+    topic = "R/${vrmID}/keepalive"
+    interfaces.mqtt.publish("${topic}", "1")
+    runEvery1Minute(keepalive)
 
     if (debugLoggingEnabled) {
         runIn(3600, disableDebugLogging)
@@ -73,7 +76,6 @@ void updated() {
 void parse(String event) {
     def message = interfaces.mqtt.parseMessage(event)
     logDebug message.toString()
-    logDebug message.topic
 
     if (message.topic == "N/${vrmID}/system/0/Dc/Battery/Soc") {
         def TempData = parseJson( message.payload )
@@ -101,6 +103,12 @@ void subscribe() {
     }
 }
 
+
+void keepalive() {
+    topic = "R/${vrmID}/keepalive"
+    options = '{ "keepalive-options" : ["suppress-republish"] }'
+    interfaces.mqtt.publish("${topic}", "${options}")
+}
 
 void reconnect() {
     state.connectDelay = state.connectDelay ?: 0
