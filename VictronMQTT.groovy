@@ -75,7 +75,7 @@ void parse(String event) {
     logDebug message.toString()
     logDebug message.topic
 
-    if (message.topic == "N/${vrmID}/battery/288/Soc") {
+    if (message.topic == "N/${vrmID}/system/0/Dc/Battery/Soc") {
         def TempData = parseJson( message.payload )
         sendEvent(name: 'battery', value: TempData.value, unit:"%")
     }
@@ -95,7 +95,7 @@ void connect() {
 
 void subscribe() {
     if (interfaces.mqtt.isConnected()) {
-        topic = "N/${vrmID}/battery/288/Soc"
+        topic = "N/${vrmID}/system/0/Dc/Battery/Soc"
         logDebug 'Subscribing to ' + topic
         interfaces.mqtt.subscribe(topic)
     }
