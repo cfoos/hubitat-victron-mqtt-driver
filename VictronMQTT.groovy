@@ -79,7 +79,7 @@ void parse(String event) {
 
     if (message.topic == "N/${vrmID}/system/0/Dc/Battery/Soc") {
         def TempData = parseJson( message.payload )
-        sendEvent(name: 'battery', value: TempData.value, unit:"%")
+        sendEvent(name: 'battery', value: Math.round(TempData.value * 100)/100, unit:"%")
     }
 }
 
