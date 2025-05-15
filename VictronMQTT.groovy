@@ -36,7 +36,15 @@ metadata {
     {
         capability "Initialize"
         capability "Battery"
+        capability "VoltageMeasurement"
+        capability "PowerMeter"
+        capability "TemperatureMeasurement"
+        capability "CurrentMeter"
+        attribute 'amperage', 'number'
+        attribute 'temperature', 'number'
+        attribute 'power', 'number'
         attribute 'battery', 'number'
+        attribute 'voltage', 'number'
         attribute 'lastUpdated', 'date'
 
     }
@@ -81,6 +89,24 @@ void parse(String event) {
         def TempData = parseJson( message.payload )
         sendEvent(name: 'battery', value: Math.round(TempData.value * 100)/100, unit:"%")
     }
+    if (message.topic == "N/${vrmID}/system/0/Dc/Battery/Voltage") {
+        def TempData = parseJson( message.payload )
+        sendEvent(name: 'voltage', value: Math.round(TempData.value * 100)/100, unit:"V")
+    }
+    if (message.topic == "N/${vrmID}/system/0/Dc/Battery/Power") {
+        def TempData = parseJson( message.payload )
+        sendEvent(name: 'power', value: Math.round(TempData.value * 100)/100, unit:"W")
+    }
+    if (message.topic == "N/${vrmID}/system/0/Dc/Battery/Temperature") {
+        def TempData = parseJson( message.payload )
+        sendEvent(name: 'temperature', value: Math.round(TempData.value * 100)/100, unit:"°C")
+    }
+    if (message.topic == "N/${vrmID}/system/0/Dc/Battery/Current") {
+        def TempData = parseJson( message.payload )
+        sendEvent(name: 'amperage', value: Math.round(TempData.value * 100)/100, unit:"A")
+    }
+
+
 }
 
 /* MQTT */
@@ -98,6 +124,18 @@ void connect() {
 void subscribe() {
     if (interfaces.mqtt.isConnected()) {
         topic = "N/${vrmID}/system/0/Dc/Battery/Soc"
+        logDebug 'Subscribing to ' + topic
+        interfaces.mqtt.subscribe(topic)
+        topic = "N/${vrmID}/system/0/Dc/Battery/Voltage"
+        logDebug 'Subscribing to ' + topic
+        interfaces.mqtt.subscribe(topic)
+        topic = "N/${vrmID}/system/0/Dc/Battery/Power"
+        logDebug 'Subscribing to ' + topic
+        interfaces.mqtt.subscribe(topic)
+        topic = "N/${vrmID}/system/0/Dc/Battery/Temperature"
+        logDebug 'Subscribing to ' + topic
+        interfaces.mqtt.subscribe(topic)
+        topic = "N/${vrmID}/system/0/Dc/Battery/Current"
         logDebug 'Subscribing to ' + topic
         interfaces.mqtt.subscribe(topic)
     }
