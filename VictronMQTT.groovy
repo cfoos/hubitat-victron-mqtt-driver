@@ -46,7 +46,6 @@ metadata {
         attribute 'battery', 'number'
         attribute 'voltage', 'number'
         attribute 'lastUpdated', 'date'
-
     }
 }
 
@@ -57,12 +56,37 @@ preferences {
         input name: 'victronUsername', type: 'string', title: 'VRM Username (email address) "Only needed for web access"'
         input name: 'vrmID', type: 'string', title: 'VRM ID'
         input name: 'vrmAccessToken', type: 'string', title: 'VRM Access Token "Only needed for web access"'
-        
+        input name: 'vrmSSL', type: 'bool', title: 'Enable ssl "Only needed for web access"', defaultValue: false
     }
     section('Advanced') {
         input name: 'debugLoggingEnabled', type: 'bool', title: 'Enable debug logging', defaultValue: true
     }
 }
+
+String vrmCert = """-----BEGIN CERTIFICATE-----
+MIIECTCCAvGgAwIBAgIJAM+t3iC8ybEHMA0GCSqGSIb3DQEBCwUAMIGZMQswCQYD
+VQQGEwJOTDESMBAGA1UECAwJR3JvbmluZ2VuMRIwEAYDVQQHDAlHcm9uaW5nZW4x
+HDAaBgNVBAoME1ZpY3Ryb24gRW5lcmd5IEIuVi4xIzAhBgNVBAsMGkNDR1ggQ2Vy
+dGlmaWNhdGUgQXV0aG9yaXR5MR8wHQYJKoZIhvcNAQkBFhBzeXNhZG1pbkB5dGVj
+Lm5sMCAXDTE0MDkxNzExNTQxOVoYDzIxMTQwODI0MTE1NDE5WjCBmTELMAkGA1UE
+BhMCTkwxEjAQBgNVBAgMCUdyb25pbmdlbjESMBAGA1UEBwwJR3JvbmluZ2VuMRww
+GgYDVQQKDBNWaWN0cm9uIEVuZXJneSBCLlYuMSMwIQYDVQQLDBpDQ0dYIENlcnRp
+ZmljYXRlIEF1dGhvcml0eTEfMB0GCSqGSIb3DQEJARYQc3lzYWRtaW5AeXRlYy5u
+bDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKVdbAUAElbX+Sh0FATX
+yhlJ6zqYMHbqCXawgsOe09zHynDCT4GTXuSuoH2kR/1jE8zvWNLHORXa/eahzWJP
+V4WpXuYsFEyU3r8hxA6y+SR06IT7WHdfN6LXN+qt5KLQbmQLxeb1zElMKW4io/WE
+N+SWpo5dklXAS6vnq+VRTNwRYnPOUIXKduhvTQp6hEHnLBjYC/Ot8SkC8KtL88cW
+pH6d7UmeW3333/vNMEMOTLWlOWrR30P6R+gTjbvzasaB6tlcYqW+jO1YDlBwhSEV
+4As4ziQysuy4qvm41KY/o4Q6P6npsh8MaZuRmi/UTxU2DHAbs/on7qaRi6IkVgvg
+o6kCAwEAAaNQME4wHQYDVR0OBBYEFPjmM5NYXMw7Wc/TgbLtwPnMAfewMB8GA1Ud
+IwQYMBaAFPjmM5NYXMw7Wc/TgbLtwPnMAfewMAwGA1UdEwQFMAMBAf8wDQYJKoZI
+hvcNAQELBQADggEBAEFTeGcmxzzXJIfgUrfKLki+hi2mR9g7qomvw6IB1JQHefIw
+iKXe14gdp0ytjYL6QoTeEbS2A8VI2FvSbusAzn0JqXdZI+Gwt/CuH0XH40QHpaQ5
+UAB5d7EGvbB2op7AA/IyR5TwF/cDb1fRbTaTmwDOIo3kuFGEyNCc+PFrN2MvtPHn
+hHH7fo7joY7mUKdP573bJXFsLwZxlqiycJreroLPFqYwgChaMTStQ71rP5i1eGtg
+ealQ7kPVtlHmX89tCkfkK77ojm48qgl4gwsI01SikstaPP9fr4ck+U/qIKhSg+Bg
+nc9OImY9ubQxe+/GQP4KFme2PPqthEWys7ut2HM=
+-----END CERTIFICATE-----"""
 
 void initialize() {
     state.remove('connectDelay')
@@ -113,8 +137,13 @@ void parse(String event) {
 
 void connect() {
     try {
-        logDebug "Connecting to Victron broker at ${victronIP}:${victronPort}"
-        interfaces.mqtt.connect(getMQTTConnectURI(), "victron_mqtt_client_${device.id}", victronUsername, vrmAccessToken)
+        if( !vrmSSL ){
+            logDebug "Connecting to Victron broker at ${getMQTTConnectURI()}, \"victron_mqtt_client_${device.id}\", victronUsername, vrmAccessToken"
+            interfaces.mqtt.connect(getMQTTConnectURI(), "victron_mqtt_client_${device.id}", victronUsername, vrmAccessToken)
+        } else {
+            logDebug "Connecting to Victron broker at ${getMQTTConnectURI()}, \"victron_mqtt_client_${device.id}\", victronUsername, vrmAccessToken, privateKey: vrmCert, caCertificate: vrmCert, clientCertificate: vrmCert, ignoreSSLIssues: true}"
+            interfaces.mqtt.connect(getMQTTConnectURI(), "victron_mqtt_client_${device.id}", victronUsername, vrmAccessToken, privateKey: vrmCert, caCertificate: vrmCert, clientCertificate: vrmCert, ignoreSSLIssues: true)
+        }
     } catch (e) {
         log.error "Error connecting to Victron broker: ${e.message}"
         reconnect()
@@ -173,7 +202,11 @@ void mqttClientStatus(String status) {
 /* Helpers */
 
 String getMQTTConnectURI() {
-    "tcp://${victronIP}:${victronPort}"
+    if( !vrmSSL ){
+        "tcp://${victronIP}:${victronPort}"
+    } else {
+        "ssl://${victronIP}:${victronPort}"
+    }
 }
 
 String getTopic(String topicSuffix) {
