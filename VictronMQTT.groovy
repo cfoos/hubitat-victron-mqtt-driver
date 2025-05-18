@@ -207,7 +207,7 @@ void parse(String event) {
     if (message.topic == "N/${vrmID}/system/0/Dc/InverterCharger/Power") {
         def TempData = parseJson( message.payload )
         if ( TempData.value != null ){
-            sendEvent(name: 'inverterPower', value: Math.round(TempData.value * 100)/-100, unit:"W")
+            sendEvent(name: 'inverterPower', value: Math.round(TempData.value * 100)/100, unit:"W")
         }
     }
 }
