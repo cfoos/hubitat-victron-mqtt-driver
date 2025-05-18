@@ -32,6 +32,7 @@ metadata {
         name: 'Victron MQTT Client',
         namespace: 'cfoos',
         author: 'cfoos',
+        importUrl: "https://raw.githubusercontent.com/cfoos/hubitat-victron-mqtt-driver/refs/heads/main/VictronMQTT.groovy"
     )
     {
         capability "Initialize"
@@ -40,12 +41,20 @@ metadata {
         capability "PowerMeter"
         capability "TemperatureMeasurement"
         capability "CurrentMeter"
-        attribute 'amperage', 'number'
-        attribute 'temperature', 'number'
-        attribute 'power', 'number'
-        attribute 'battery', 'number'
-        attribute 'voltage', 'number'
-        attribute 'lastUpdated', 'date'
+        attribute 'batteryAmperage', 'number'
+        attribute 'batteryTemperature', 'number'
+        attribute 'batteryPower', 'number'
+        attribute 'batterySOC', 'number'
+        attribute 'batteryVoltage', 'number'
+        attribute 'acInSource', 'string'
+        attribute 'acL1GridInPower', 'number'
+        attribute 'acL2GridInPower', 'number'
+        attribute 'acL3GridInPower', 'number'
+        attribute 'acL1ConsumptionPower', 'number'
+        attribute 'acL2ConsumptionPower', 'number'
+        attribute 'acL3ConsumptionPower', 'number'
+        attribute 'pvPower', 'number'
+        attribute 'inverterPower', 'number'
     }
 }
 
@@ -111,26 +120,96 @@ void parse(String event) {
 
     if (message.topic == "N/${vrmID}/system/0/Dc/Battery/Soc") {
         def TempData = parseJson( message.payload )
-        sendEvent(name: 'battery', value: Math.round(TempData.value * 100)/100, unit:"%")
+        sendEvent(name: 'batterySOC', value: Math.round(TempData.value * 100)/100, unit:"%")
     }
     if (message.topic == "N/${vrmID}/system/0/Dc/Battery/Voltage") {
         def TempData = parseJson( message.payload )
-        sendEvent(name: 'voltage', value: Math.round(TempData.value * 100)/100, unit:"V")
+        sendEvent(name: 'batteryVoltage', value: Math.round(TempData.value * 100)/100, unit:"V")
     }
     if (message.topic == "N/${vrmID}/system/0/Dc/Battery/Power") {
         def TempData = parseJson( message.payload )
-        sendEvent(name: 'power', value: Math.round(TempData.value * 100)/100, unit:"W")
+        sendEvent(name: 'batteryPower', value: Math.round(TempData.value * 100)/100, unit:"W")
     }
     if (message.topic == "N/${vrmID}/system/0/Dc/Battery/Temperature") {
         def TempData = parseJson( message.payload )
-        sendEvent(name: 'temperature', value: Math.round(TempData.value * 100)/100, unit:"°C")
+        sendEvent(name: 'batteryTemperature', value: Math.round(TempData.value * 100)/100, unit:"°C")
     }
     if (message.topic == "N/${vrmID}/system/0/Dc/Battery/Current") {
         def TempData = parseJson( message.payload )
-        sendEvent(name: 'amperage', value: Math.round(TempData.value * 100)/100, unit:"A")
+        sendEvent(name: 'batteryAmperage', value: Math.round(TempData.value * 100)/100, unit:"A")
     }
-
-
+    if (message.topic == "N/${vrmID}/system/0/Ac/ActiveIn/Source") {
+        def TempData = parseJson( message.payload )
+        logDebug 'AC source is '+ TempData
+        switch (TempData.value){
+            case "0":
+                sendEvent(name: 'acInSource', value: "Not Available")
+                break
+            case "1":
+                sendEvent(name: 'acInSource', value: "Grid")
+                break
+            case "2":
+                sendEvent(name: 'acInSource', value: "Generator")
+                break
+            case "3":
+                sendEvent(name: 'acInSource', value: "Shore")
+                break
+            case "240":
+                sendEvent(name: 'acInSource', value: "Inverting/Island mode")
+                break
+            default:
+                sendEvent(name: 'acInSource', value: "Undetected")
+                break
+        }
+    }
+    if (message.topic == "N/${vrmID}/system/0/Ac/Grid/L1/Power") {
+        def TempData = parseJson( message.payload )
+        if ( TempData.value != null ){
+            sendEvent(name: 'acL1GridInPower', value: Math.round(TempData.value * 100)/100, unit:"W")
+        }
+    }
+    if (message.topic == "N/${vrmID}/system/0/Ac/Grid/L2/Power") {
+        def TempData = parseJson( message.payload )
+        if ( TempData.value != null ){
+            sendEvent(name: 'acL2GridInPower', value: Math.round(TempData.value * 100)/100, unit:"W")
+        }
+    }
+    if (message.topic == "N/${vrmID}/system/0/Ac/Grid/L3/Power") {
+        def TempData = parseJson( message.payload )
+        if ( TempData.value != null ){
+            sendEvent(name: 'acL3GridInPower', value: Math.round(TempData.value * 100)/100, unit:"W")
+        }
+    }
+    if (message.topic == "N/${vrmID}/system/0/Ac/ConsumptionOnOutput/L1/Power") {
+        def TempData = parseJson( message.payload )
+        if ( TempData.value != null ){
+            sendEvent(name: 'acL1ConsumptionPower', value: Math.round(TempData.value * 100)/100, unit:"W")
+        }
+    }
+    if (message.topic == "N/${vrmID}/system/0/Ac/ConsumptionOnOutput/L2/Power") {
+        def TempData = parseJson( message.payload )
+        if ( TempData.value != null ){
+            sendEvent(name: 'acL2ConsumptionPower', value: Math.round(TempData.value * 100)/100, unit:"W")
+        }
+    }
+    if (message.topic == "N/${vrmID}/system/0/Ac/ConsumptionOnOutput/L3/Power") {
+        def TempData = parseJson( message.payload )
+        if ( TempData.value != null ){
+            sendEvent(name: 'acL2ConsumptionPower', value: Math.round(TempData.value * 100)/100, unit:"W")
+        }
+    }
+    if (message.topic == "N/${vrmID}/system/0/Dc/Pv/Power") {
+        def TempData = parseJson( message.payload )
+        if ( TempData.value != null ){
+            sendEvent(name: 'pvPower', value: Math.round(TempData.value * 100)/100, unit:"W")
+        }
+    }
+    if (message.topic == "N/${vrmID}/system/0/Dc/InverterCharger/Power") {
+        def TempData = parseJson( message.payload )
+        if ( TempData.value != null ){
+            sendEvent(name: 'inverterPower', value: Math.round(TempData.value * 100)/-100, unit:"W")
+        }
+    }
 }
 
 /* MQTT */
@@ -165,6 +244,33 @@ void subscribe() {
         logDebug 'Subscribing to ' + topic
         interfaces.mqtt.subscribe(topic)
         topic = "N/${vrmID}/system/0/Dc/Battery/Current"
+        logDebug 'Subscribing to ' + topic
+        interfaces.mqtt.subscribe(topic)
+        topic = "N/${vrmID}/system/0/Ac/Grid/L1/Power"
+        logDebug 'Subscribing to ' + topic
+        interfaces.mqtt.subscribe(topic)
+        topic = "N/${vrmID}/system/0/Ac/Grid/L2/Power"
+        logDebug 'Subscribing to ' + topic
+        interfaces.mqtt.subscribe(topic)
+        topic = "N/${vrmID}/system/0/Ac/Grid/L3/Power"
+        logDebug 'Subscribing to ' + topic
+        interfaces.mqtt.subscribe(topic)
+        topic = "N/${vrmID}/system/0/Ac/ActiveIn/Source"
+        logDebug 'Subscribing to ' + topic
+        interfaces.mqtt.subscribe(topic)
+        topic = "N/${vrmID}/system/0/Ac/ConsumptionOnOutput/L1/Power"
+        logDebug 'Subscribing to ' + topic
+        interfaces.mqtt.subscribe(topic)
+        topic = "N/${vrmID}/system/0/Ac/ConsumptionOnOutput/L2/Power"
+        logDebug 'Subscribing to ' + topic
+        interfaces.mqtt.subscribe(topic)
+        topic = "N/${vrmID}/system/0/Ac/ConsumptionOnOutput/L3/Power"
+        logDebug 'Subscribing to ' + topic
+        interfaces.mqtt.subscribe(topic)
+        topic = "N/${vrmID}/system/0/Dc/Pv/Power"
+        logDebug 'Subscribing to ' + topic
+        interfaces.mqtt.subscribe(topic)
+        topic = "N/${vrmID}/system/0/Dc/InverterCharger/Power"
         logDebug 'Subscribing to ' + topic
         interfaces.mqtt.subscribe(topic)
     }
