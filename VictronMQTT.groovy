@@ -55,6 +55,7 @@ metadata {
         attribute 'acL3ConsumptionPower', 'number'
         attribute 'pvPower', 'number'
         attribute 'inverterPower', 'number'
+        attribute 'dcPower', 'number'
     }
 }
 
@@ -210,6 +211,12 @@ void parse(String event) {
             sendEvent(name: 'inverterPower', value: Math.round(TempData.value * 100)/100, unit:"W")
         }
     }
+    if (message.topic == "N/${vrmID}/system/0/Dc/System/Power") {
+        def TempData = parseJson( message.payload )
+        if ( TempData.value != null ){
+            sendEvent(name: 'dcPower', value: Math.round(TempData.value * 100)/100, unit:"W")
+        }
+    }
 }
 
 /* MQTT */
@@ -271,6 +278,9 @@ void subscribe() {
         logDebug 'Subscribing to ' + topic
         interfaces.mqtt.subscribe(topic)
         topic = "N/${vrmID}/system/0/Dc/InverterCharger/Power"
+        logDebug 'Subscribing to ' + topic
+        interfaces.mqtt.subscribe(topic)
+        topic = "N/${vrmID}/system/0/Dc/System/Power"
         logDebug 'Subscribing to ' + topic
         interfaces.mqtt.subscribe(topic)
     }
