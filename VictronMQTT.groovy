@@ -41,21 +41,32 @@ metadata {
         capability "PowerMeter"
         capability "TemperatureMeasurement"
         capability "CurrentMeter"
-        attribute 'batteryAmperage', 'number'
+        attribute 'batteryCurrent', 'number'
         attribute 'batteryTemperature', 'number'
         attribute 'batteryPower', 'number'
         attribute 'batterySOC', 'number'
         attribute 'batteryVoltage', 'number'
+        attribute 'batteryTimeToGo', 'string'
         attribute 'acInSource', 'string'
         attribute 'acL1GridInPower', 'number'
         attribute 'acL2GridInPower', 'number'
         attribute 'acL3GridInPower', 'number'
+        attribute 'acL1GridInCurrent', 'number'
+        attribute 'acL2GridInCurrent', 'number'
+        attribute 'acL3GridInCurrent', 'number'
         attribute 'acL1ConsumptionPower', 'number'
         attribute 'acL2ConsumptionPower', 'number'
         attribute 'acL3ConsumptionPower', 'number'
+        attribute 'acL1ConsumptionCurrent', 'number'
+        attribute 'acL2ConsumptionCurrent', 'number'
+        attribute 'acL3ConsumptionCurrent', 'number'
         attribute 'pvPower', 'number'
+        attribute 'pvCurrent', 'number'
         attribute 'inverterPower', 'number'
+        attribute 'inverterCurrent', 'number'
         attribute 'dcPower', 'number'
+        attribute 'dcCurrent', 'number'
+        attribute 'systemState', 'string'
     }
 }
 
@@ -137,7 +148,15 @@ void parse(String event) {
     }
     if (message.topic == "N/${vrmID}/system/0/Dc/Battery/Current") {
         def TempData = parseJson( message.payload )
-        sendEvent(name: 'batteryAmperage', value: Math.round(TempData.value * 100)/100, unit:"A")
+        sendEvent(name: 'batteryCurrent', value: Math.round(TempData.value * 100)/100, unit:"A")
+    }
+    if (message.topic == "N/${vrmID}/system/0/Dc/Battery/TimeToGo") {
+        def TempData = parseJson( message.payload )
+        if ( TempData.value != null ){
+            sendEvent(name: 'batteryTimeToGo', value: Math.round(TempData.value))
+        } else {
+            sendEvent(name: 'batteryTimeToGo', value: "unknown")
+        }
     }
     if (message.topic == "N/${vrmID}/system/0/Ac/ActiveIn/Source") {
         def TempData = parseJson( message.payload )
@@ -181,6 +200,24 @@ void parse(String event) {
             sendEvent(name: 'acL3GridInPower', value: Math.round(TempData.value * 100)/100, unit:"W")
         }
     }
+    if (message.topic == "N/${vrmID}/system/0/Ac/Grid/L1/Current") {
+        def TempData = parseJson( message.payload )
+        if ( TempData.value != null ){
+            sendEvent(name: 'acL1GridInCurrent', value: Math.round(TempData.value * 100)/100, unit:"A")
+        }
+    }
+    if (message.topic == "N/${vrmID}/system/0/Ac/Grid/L2/Current") {
+        def TempData = parseJson( message.payload )
+        if ( TempData.value != null ){
+            sendEvent(name: 'acL2GridInCurrent', value: Math.round(TempData.value * 100)/100, unit:"A")
+        }
+    }
+    if (message.topic == "N/${vrmID}/system/0/Ac/Grid/L3/Current") {
+        def TempData = parseJson( message.payload )
+        if ( TempData.value != null ){
+            sendEvent(name: 'acL3GridInCurrent', value: Math.round(TempData.value * 100)/100, unit:"A")
+        }
+    }
     if (message.topic == "N/${vrmID}/system/0/Ac/ConsumptionOnOutput/L1/Power") {
         def TempData = parseJson( message.payload )
         if ( TempData.value != null ){
@@ -199,10 +236,34 @@ void parse(String event) {
             sendEvent(name: 'acL2ConsumptionPower', value: Math.round(TempData.value * 100)/100, unit:"W")
         }
     }
+    if (message.topic == "N/${vrmID}/system/0/Ac/ConsumptionOnOutput/L1/Current") {
+        def TempData = parseJson( message.payload )
+        if ( TempData.value != null ){
+            sendEvent(name: 'acL1ConsumptionCurrent', value: Math.round(TempData.value * 100)/100, unit:"A")
+        }
+    }
+    if (message.topic == "N/${vrmID}/system/0/Ac/ConsumptionOnOutput/L2/Current") {
+        def TempData = parseJson( message.payload )
+        if ( TempData.value != null ){
+            sendEvent(name: 'acL2ConsumptionCurrent', value: Math.round(TempData.value * 100)/100, unit:"A")
+        }
+    }
+    if (message.topic == "N/${vrmID}/system/0/Ac/ConsumptionOnOutput/L3/Current") {
+        def TempData = parseJson( message.payload )
+        if ( TempData.value != null ){
+            sendEvent(name: 'acL2ConsumptionCurrent', value: Math.round(TempData.value * 100)/100, unit:"A")
+        }
+    }
     if (message.topic == "N/${vrmID}/system/0/Dc/Pv/Power") {
         def TempData = parseJson( message.payload )
         if ( TempData.value != null ){
             sendEvent(name: 'pvPower', value: Math.round(TempData.value * 100)/100, unit:"W")
+        }
+    }
+    if (message.topic == "N/${vrmID}/system/0/Dc/Pv/Current") {
+        def TempData = parseJson( message.payload )
+        if ( TempData.value != null ){
+            sendEvent(name: 'pvCurrent', value: Math.round(TempData.value * 100)/100, unit:"A")
         }
     }
     if (message.topic == "N/${vrmID}/system/0/Dc/InverterCharger/Power") {
@@ -211,10 +272,82 @@ void parse(String event) {
             sendEvent(name: 'inverterPower', value: Math.round(TempData.value * 100)/100, unit:"W")
         }
     }
+    if (message.topic == "N/${vrmID}/system/0/Dc/InverterCharger/Current") {
+        def TempData = parseJson( message.payload )
+        if ( TempData.value != null ){
+            sendEvent(name: 'inverterCurrent', value: Math.round(TempData.value * 100)/100, unit:"A")
+        }
+    }
     if (message.topic == "N/${vrmID}/system/0/Dc/System/Power") {
         def TempData = parseJson( message.payload )
         if ( TempData.value != null ){
             sendEvent(name: 'dcPower', value: Math.round(TempData.value * 100)/100, unit:"W")
+        }
+    }
+    if (message.topic == "N/${vrmID}/system/0/Dc/System/Current") {
+        def TempData = parseJson( message.payload )
+        if ( TempData.value != null ){
+            sendEvent(name: 'dcCurrent', value: Math.round(TempData.value * 100)/100, unit:"A")
+        }
+    }
+    if (message.topic == "N/${vrmID}/system/0/SystemState/State") {
+        def TempData = parseJson( message.payload )
+        logDebug 'System state is '+ TempData
+        switch (TempData.value){
+            case "0":
+                sendEvent(name: 'systemState', value: "Off")
+                break
+            case "1":
+                sendEvent(name: 'systemState', value: "Low power")
+                break
+            case "2":
+                sendEvent(name: 'systemState', value: "VE.Bus Fault condition")
+                break
+            case "3":
+                sendEvent(name: 'systemState', value: "Bulk charging")
+                break
+            case "4":
+                sendEvent(name: 'systemState', value: "Absorption charging")
+                break
+            case "5":
+                sendEvent(name: 'systemState', value: "Float charging")
+                break
+            case "6":
+                sendEvent(name: 'systemState', value: "Storage mode")
+                break
+            case "7":
+                sendEvent(name: 'systemState', value: "Equalisation charging")
+                break
+            case "8":
+                sendEvent(name: 'systemState', value: "Passthru")
+                break
+            case "9":
+                sendEvent(name: 'systemState', value: "Inverting")
+                break
+            case "10":
+                sendEvent(name: 'systemState', value: "Assisting")
+                break
+            case "244":
+                sendEvent(name: 'systemState', value: "Battery Sustain (because Prefer Renewable Energy is enabled)")
+                break
+            case "252":
+                sendEvent(name: 'systemState', value: "External control")
+                break
+            case "256":
+                sendEvent(name: 'systemState', value: "Discharging")
+                break
+            case "257":
+                sendEvent(name: 'systemState', value: "Sustain (battery voltage dropped below ESS dynamic cut-off)")
+                break
+            case "258":
+                sendEvent(name: 'systemState', value: "Recharge")
+                break
+            case "259":
+                sendEvent(name: 'systemState', value: "Scheduled recharge")
+                break
+            default:
+                sendEvent(name: 'systemState', value: "Undetected")
+                break
         }
     }
 }
@@ -262,6 +395,15 @@ void subscribe() {
         topic = "N/${vrmID}/system/0/Ac/Grid/L3/Power"
         logDebug 'Subscribing to ' + topic
         interfaces.mqtt.subscribe(topic)
+        topic = "N/${vrmID}/system/0/Ac/Grid/L1/Current"
+        logDebug 'Subscribing to ' + topic
+        interfaces.mqtt.subscribe(topic)
+        topic = "N/${vrmID}/system/0/Ac/Grid/L2/Current"
+        logDebug 'Subscribing to ' + topic
+        interfaces.mqtt.subscribe(topic)
+        topic = "N/${vrmID}/system/0/Ac/Grid/L3/Current"
+        logDebug 'Subscribing to ' + topic
+        interfaces.mqtt.subscribe(topic)
         topic = "N/${vrmID}/system/0/Ac/ActiveIn/Source"
         logDebug 'Subscribing to ' + topic
         interfaces.mqtt.subscribe(topic)
@@ -274,13 +416,37 @@ void subscribe() {
         topic = "N/${vrmID}/system/0/Ac/ConsumptionOnOutput/L3/Power"
         logDebug 'Subscribing to ' + topic
         interfaces.mqtt.subscribe(topic)
+        topic = "N/${vrmID}/system/0/Ac/ConsumptionOnOutput/L1/Current"
+        logDebug 'Subscribing to ' + topic
+        interfaces.mqtt.subscribe(topic)
+        topic = "N/${vrmID}/system/0/Ac/ConsumptionOnOutput/L2/Current"
+        logDebug 'Subscribing to ' + topic
+        interfaces.mqtt.subscribe(topic)
+        topic = "N/${vrmID}/system/0/Ac/ConsumptionOnOutput/L3/Current"
+        logDebug 'Subscribing to ' + topic
+        interfaces.mqtt.subscribe(topic)
         topic = "N/${vrmID}/system/0/Dc/Pv/Power"
+        logDebug 'Subscribing to ' + topic
+        interfaces.mqtt.subscribe(topic)
+        topic = "N/${vrmID}/system/0/Dc/Pv/Current"
         logDebug 'Subscribing to ' + topic
         interfaces.mqtt.subscribe(topic)
         topic = "N/${vrmID}/system/0/Dc/InverterCharger/Power"
         logDebug 'Subscribing to ' + topic
         interfaces.mqtt.subscribe(topic)
+        topic = "N/${vrmID}/system/0/Dc/InverterCharger/Current"
+        logDebug 'Subscribing to ' + topic
+        interfaces.mqtt.subscribe(topic)
         topic = "N/${vrmID}/system/0/Dc/System/Power"
+        logDebug 'Subscribing to ' + topic
+        interfaces.mqtt.subscribe(topic)
+        topic = "N/${vrmID}/system/0/Dc/System/Current"
+        logDebug 'Subscribing to ' + topic
+        interfaces.mqtt.subscribe(topic)
+        topic = "N/${vrmID}/system/0/Dc/Battery/TimeToGo"
+        logDebug 'Subscribing to ' + topic
+        interfaces.mqtt.subscribe(topic)
+        topic = "N/${vrmID}/system/0/SystemState/State"
         logDebug 'Subscribing to ' + topic
         interfaces.mqtt.subscribe(topic)
     }
