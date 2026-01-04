@@ -88,8 +88,8 @@ preferences {
         input name: 'victronIP', type: 'string', title: 'Victron IP Address', required: true
         input name: 'victronPort', type: 'string', title: 'Victron Port', required: true, defaultValue: 1883
         input name: 'victronUsername', type: 'string', title: 'VRM Username (email address) "Only needed for web access"'
-        input name: 'vrmID', type: 'string', title: 'VRM ID'
-        input name: 'vrmAccessToken', type: 'string', title: 'VRM Access Token "Only needed for web access"'
+        input name: 'vrmID', type: 'string', title: 'VRM Portal ID'
+        input name: 'vrmAccessToken', type: 'string', title: 'VRM Password "Only needed for web access"'
         input name: 'vrmSSL', type: 'bool', title: 'Enable ssl "Only needed for web access"', defaultValue: false
     }
     section('Advanced') {
